@@ -36,14 +36,22 @@ export class LumoViewProvider implements vscode.WebviewViewProvider {
       }
 
       try {
-        const response = await this.lumoClient.sendMessage({
+        const context = this.contextProvider.getCurrentContext();
+
+        const request = {
           message: message.text,
-          context: this.contextProvider.getCurrentContext(),
+          context,
+        };
+
+        await this.lumoClient.streamMessage(request, (chunk) => {
+          webviewView.webview.postMessage({
+            type: "chunk",
+            text: chunk,
+          });
         });
 
         webviewView.webview.postMessage({
-          type: "response",
-          text: response,
+          type: "complete",
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

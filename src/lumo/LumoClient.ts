@@ -6,7 +6,8 @@ const LUMO_ENDPOINT = "https://lumo.proton.me/api/ai/v1/chat/completions";
 export class LumoClient {
   constructor(private readonly authProvider: AuthProvider) {}
 
-  async sendMessage(request: LumoRequest): Promise<string> {
+  async streamMessage(request: LumoRequest, onChunk: (chunk: string) => void): Promise<void> {
+    console.log("Streaming message:", request.message);
     const headers = await this.authProvider.getHeaders();
 
     const systemPrompt = this.buildSystemPrompt(request);
@@ -36,6 +37,7 @@ export class LumoClient {
       headers,
       body: JSON.stringify(payload),
     });
+    console.log("After response");
 
     if (!response.ok) {
       throw new Error(`Lumo request failed: ${response.status} ${response.statusText}`);
@@ -45,7 +47,7 @@ export class LumoClient {
       throw new Error("Lumo returned an empty response body.");
     }
 
-    return this.readStream(response.body);
+    await this.readStream(response.body, onChunk);
   }
 
   private buildSystemPrompt(request: LumoRequest): string {
@@ -74,11 +76,11 @@ export class LumoClient {
     return prompt;
   }
 
-  private async readStream(body: ReadableStream<Uint8Array>): Promise<string> {
+  private async readStream(body: ReadableStream<Uint8Array>, onChunk: (chunk: string) => void): Promise<void> {
     const reader = body.getReader();
     const decoder = new TextDecoder();
 
-    let result = "";
+    let buffer = "";
 
     while (true) {
       const { value, done } = await reader.read();
@@ -87,13 +89,44 @@ export class LumoClient {
         break;
       }
 
-      result += decoder.decode(value, { stream: true });
+      buffer += decoder.decode(value, {
+        stream: true,
+      });
+
+      const events = buffer.split("\n\n");
+
+      buffer = events.pop() ?? "";
+
+      for (const event of events) {
+        const text = this.parseSseEvent(event);
+        console.log("Parsed SSE event:", text);
+        if (text) {
+          onChunk(text);
+        }
+      }
     }
 
-    result += decoder.decode();
+    buffer += decoder.decode();
+    console.log("buffer", JSON.stringify(buffer, null, 2));
 
-    console.log("HERE", JSON.stringify(result, null, 2));
+    const text = this.parseSseEvent(buffer);
 
-    return result;
+    if (text) {
+      onChunk(text);
+    }
+  }
+
+  private parseSseEvent(data: string): string | null {
+    if (data === "[DONE]") {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(data);
+
+      return parsed.choices?.[0]?.message?.content ?? null;
+    } catch {
+      return null;
+    }
   }
 }
