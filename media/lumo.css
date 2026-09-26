@@ -1,0 +1,17 @@
+body {
+  padding: 12px;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+button {
+  margin-top: 8px;
+}
+
+#response {
+  margin-top: 20px;
+}

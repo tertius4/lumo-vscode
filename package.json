@@ -15,6 +15,12 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "lumo.setAccessToken",
+        "title": "Lumo: Set Access Token"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
