@@ -1,0 +1,68 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <title>Lumo</title>
+
+    <style>
+      body {
+        padding: 12px;
+      }
+
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        resize: vertical;
+      }
+
+      button {
+        margin-top: 8px;
+      }
+
+      #response {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Ask Lumo</h2>
+
+    <form id="chat-form">
+      <textarea id="message" placeholder="Ask Lumo..." rows="4"></textarea>
+
+      <button type="submit">Send</button>
+    </form>
+
+    <div id="response"></div>
+
+    <script>
+      const vscode = acquireVsCodeApi();
+
+      const form = document.getElementById("chat-form");
+
+      const message = document.getElementById("message");
+
+      const response = document.getElementById("response");
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        vscode.postMessage({
+          type: "sendMessage",
+          text: message.value,
+        });
+      });
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+
+        if (message.type === "response") {
+          response.textContent = message.text;
+        }
+      });
+    </script>
+  </body>
+</html>

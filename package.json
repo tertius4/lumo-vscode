@@ -1,23 +1,39 @@
 {
   "name": "lumo-vscode",
-  "displayName": "lumo-vscode",
+  "displayName": "Lumo",
   "description": "Lumo AI coding assistant for VS Code",
   "version": "0.0.1",
+  "publisher": "tertius4",
   "engines": {
     "vscode": "^1.138.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:lumo.chat"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "lumo-vscode.helloWorld",
-        "title": "Hello World"
-      }
-    ]
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lumo",
+          "title": "Lumo",
+          "icon": "media/lumo.svg"
+        }
+      ]
+    },
+    "views": {
+      "lumo": [
+        {
+          "type": "webview",
+          "id": "lumo.chat",
+          "name": "Ask Lumo",
+          "icon": "media/lumo.svg"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -26,8 +42,8 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "package": "npm run check-types && npm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
+    "compile-tests": "tsc -p .",
+    "watch-tests": "tsc -p . -w",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
